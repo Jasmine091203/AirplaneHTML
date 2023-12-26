@@ -89,6 +89,7 @@ input[type="text"]{
 }
 
 .deleteBtn {
+	height: 35px;
 	width: 70px;
 	margin: auto;
 	padding: 10px;
