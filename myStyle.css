@@ -152,3 +152,16 @@ tr:hover {
 #content {
 	text-align: center;
 }
+.nested {
+	background-color: #4775d1;
+	color: white;
+	padding: 10px;
+	}
+	
+	.hidden {
+	display: none;
+	}
+	
+	.subtable {
+	text-align: center;
+	}
