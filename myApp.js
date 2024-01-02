@@ -66,7 +66,7 @@ function crossTableBrief() {
     const html = `
         <div class="button-container">
             <button class='btnMenu2' onclick="AirportForAirplane()">飛機所在的機場</button>
-            <button class='btnMenu2' onclick="airplanesForAirport()">在機場停泊的飛機</button>
+            <button class='btnMenu2' onclick="AirplanesForAirport()">在機場停泊的飛機</button>
         </div>
     `;
     // 切換功能區域的內容
@@ -76,11 +76,11 @@ function crossTableBrief() {
 // 點選「參與行事曆的會員」功能時，呼叫此函式
 function AirportForAirplane() {
     // 取得行事曆資料
-    axiosInstance.get('Airplane')
+    axiosInstance.get('Airport')
         .then(res => {
-            const airplane = res.data.airplane;
+            const airport = res.data.airports;
             // 呼叫函式去呈現行事曆簡易資料在頁面中
-            show_Airport_for_Airplane(airplane);
+            show_Airport_for_Airplane(airport);
         })
         .catch(err => {
             console.error(err);
@@ -88,7 +88,7 @@ function AirportForAirplane() {
 }
 
 // 呈現「行事曆資料及參與會員按鈕」在頁面中
-function show_Airport_for_Airplane(airplane) {
+function show_Airport_for_Airplane(airport) {
     // 行事曆資料及參與會員按鈕
     const html = `
         <table>
@@ -96,14 +96,16 @@ function show_Airport_for_Airplane(airplane) {
                 <tr>
                     <th>機場</th>
                     <th>機場名稱</th>
+                    <th>操作功能</th>
                 </tr>
             </thead>
             <tbody>
-                ${calendar.map(item => `
+                ${airport.map(item => `
                     <tr>
                         <td>${item.aid}</td>
                         <td>${item.aname}</td>
-                            <button class='doubleLayer' onClick="show_join_airports(${item.aid})">飛機所在的機場資料</button>
+                        <td>
+                            <button class='doubleLayer' onClick="show_join_airport('${item.aid}')">飛機所在的機場資料</button>
                         </td>
                     </tr>
                 `).join('')}
@@ -116,9 +118,11 @@ function show_Airport_for_Airplane(airplane) {
 
 
 function show_join_airport(aid) {
+    console.log(aid);
     axiosInstance.get(`Cross/AirportForAirplane/${aid}`)
         .then(res => {
-            const airport = res.data.airport;
+            const airport = res.data.airplane;
+            console.log(airport);
             show_join_airport_info(airport);
         })
         .catch(err => {
@@ -127,27 +131,27 @@ function show_join_airport(aid) {
 }
 
 // 顯示「行事曆及參與的會員」資料
-function show_join_airport_info(airport) {
-    const airportList = airplane.airports;
+function show_join_airports_info(airport) {
+    const airplaneList = airport.airplanes;
     // 如果有多個會員，則用逗號隔開
-    if (!airportList) {
-        airportList.join(',');
+    if (!airplaneList) {
+        airplaneList.join(',');
     }
 
     const html = `
         <table>
             <tbody>
                 <tr>
-                    <th>編號</th>
-                    <td><input type="text" id="cid" name="cid" value="${calendar.cid}" disabled></td>
+                    <th>機場編號</th>
+                    <td><input type="text" id="aid" name="aid" value="${airport.aid}" disabled></td>
                 </tr>
                 <tr>
-                    <th>標題</th>
-                    <td><input type="text" id="cname" name="cname" value="${calendar.cname}" disabled></td>
+                    <th>機場名稱</th>
+                    <td><input type="text" id="aname" name="aname" value="${airport.aname}" disabled></td>
                 </tr>
                 <tr>
-                    <th>參與會員</th>                    
-                    <td><input type="text" id="members" name="members" value="${memberList}" disabled></td>
+                    <th>停放的飛機</th>                    
+                    <td><input type="text" id="airplanes" name="airplanes" value="${airplaneList}" disabled></td>
                 </tr>              
             </tbody>
         </table>
@@ -157,14 +161,14 @@ function show_join_airport_info(airport) {
     `;
 
     // 切換功能區域的內容
-    switchContent('行事曆的會員列表', html);
+    switchContent('機場的飛機列表', html);
     // 取得關閉按鈕
     const closeButton = document.getElementById('closeButton');
 
     // 設置關閉按鈕的功能
     closeButton.addEventListener('click', function () {
         // 重新列出最新的行事曆清單
-        membersForCalendar();
+        AirportForAirplane();
     });
 }
 
@@ -307,11 +311,10 @@ function show_airplane_add() {
 
 // （修改）
 function update_airplane(pid) {
-
+    console.log(pid);
     axiosInstance.get(`Airplane/${pid}`)
         .then(res => {
-            const airplane = res.data.airplane;
-
+            const airplane = res.data.airplanes;
             show_airplane_update(airplane);
         })
         .catch(err => {
@@ -371,7 +374,7 @@ function show_airplane_update(airplane) {
 function delete_airplane(pid) {
     axiosInstance.get(`Airplane/${pid}`)
         .then(res => {
-            const airplane = res.data.airplane;
+            const airplane = res.data.airplanes;
             show_airplane_delete(airplane);
         })
         .catch(err => {
@@ -386,7 +389,7 @@ function show_airplane_delete(airplane) {
     <form id="delete-airplane-form">
         <table>
             <tbody>
-            <tr>
+                <tr>
                     <th>飛機名稱</th>
                     <td><input type="text" id="pname" name="pname" value="${airplane.pname}" disabled></td>
                 </tr>
@@ -513,7 +516,6 @@ function AirportFullCRUD() {
             console.error(err);
         });
 }
-
 //DONE
 //-----------------------------------------------------------------------------------------------------------------------------------//
 function add_airport() {
@@ -687,47 +689,48 @@ function show_airport_delete(airport) {
 //-----------------------------------------------------------------------------------------------------------------------------------//
 //01
 function airplanesForAirport() {
-    axiosInstance.get('Airport')
+
+    axiosInstance.get('Airplane')
         .then(res => {
-            const airport = res.data.data;
-            show_airplanes_for_airport(airport);
+            const airplane = res.data.airplanes;
+
+            show_Airplanes_for_Airport(airplane);
         })
         .catch(err => {
             console.error(err);
         });
 }
 //02
-function show_airplanes_for_airport(airport) {
+function show_Airplanes_for_Airport(airplane) {
+
     const html = `
-    <table>
-        <thead>
-            <tr>
-                <th>飛機名稱</th>
-                <th>航廈數</th>
-                <th>停機坪數</th>
-                <th>面積</th>
-            </tr>
-        </thead>
-        <tbody>
-            ${airport.map(item => `
+        <table>
+            <thead>
                 <tr>
-                    <td>${item.aname}</td>
-                    <td>${item.aterminal}</td>
-                    <td>${item.aapron}</td>
-                    <td>${item.aarea}</td>
-                    <td>
-                    <button class='doubleLayer' onClick="show_join_airplanes(${item.aid})">參與的飛機</button>
-                    </td>
-                </td>
+                    <th>飛機</th>
+                    <th>飛機</th>
+                    <th>飛機</th>
                 </tr>
-            `).join('')}
-        </tbody>
-    </table>;`;
-    switchContent('滯留於機場的飛機', html);
+            </thead>
+            <tbody>
+                ${airplane.map(item => `
+                    <tr>
+                        <td>${item.pid}</td>
+                        <td>${item.pname}</td>
+                        <td>
+                            <button class='doubleLayer' onClick="show_join_airplanes_info(${item.pid})">參與的飛機資料</button>
+                        </td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
+
+    switchContent('飛機所在的機場', html);
 }
 //03
 function show_join_airplanes(aid) {
-    axiosInstance.get(`Cross/AirplaneForAirport/${aid}`)
+    axiosInstance.get(`Cross/airplanesForAirport/${aid}`)
         .then(res => {
             const airport = res.data.airport;
             show_join_airplanes_info(airport);
@@ -736,7 +739,7 @@ function show_join_airplanes(aid) {
             console.error(err);
         });
 }
-//4
+//04
 function show_join_airplanes_info(airport) {
     const airplaneList = airport.airplanes;
     if (!airplaneList) {
@@ -768,4 +771,116 @@ function show_join_airplanes_info(airport) {
     closeButton.addEventListener('click', function () {
         airplanesForAirport();
     });
+}
+
+//-----------------------------------------------------------------------------------------------------------------------------------//
+function crossTableDoubleLayer() {
+    const html = `
+        <div class="button-container">
+            <button class='btnMenu2' onclick="airportDetailsForAirplane()">參與飛機的機場詳細資料</button>
+            <button class='btnMenu2' onclick="airplaneDetailsForAirport()">機場所參與的飛機詳細資料</button>
+        </div>
+    `;
+    switchContent('跨表格雙層折疊', html);
+}
+//DONE
+function airplaneDetailsForAirport() {
+    axiosInstance.get('Airport')
+        .then(res => {
+            const airport = res.data.data;
+            show_airport_list(airport);
+        })
+        .catch(err => {
+            console.error(err);
+        });
+}
+//DONE
+function show_airport_list(airport) {
+    const html = `
+        <table>
+            <thead>
+                <tr>
+                <th>飛機名稱</th>
+                <th>航廈數</th>
+                <th>停機坪數</th>
+                <th>面積</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${airport.map(item => `
+                    <tr onClick="show_all_airplanes_for_airport(event, ${item.aid})">
+                    <td>${item.aname}</td>
+                    <td>${item.aterminal}</td>
+                    <td>${item.aapron}</td>
+                    <td>${item.aarea}</td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
+    switchContent('查看參與的飛機詳細資料', html);
+}
+
+function show_all_airplanes_for_airport(event, aid) {
+    axiosInstance.get(`Cross/AirportDetailsForAirplane/${aid}`)
+        .then(res => {
+            const airport = res.data.data;
+            show_airplane_details_info(event, airport);
+        })
+        .catch(err => {
+            console.error(err);
+        });
+}
+
+function show_airplane_details_info(event, airport) {
+    const row = event.target.parentElement;
+
+    let nextRow = null;
+    if (row.nextElementSibling)
+        nextRow = row.nextElementSibling.children[0];
+    if (nextRow && nextRow.classList.contains('subtable')) {
+        if (nextRow.classList.contains('hidden')) {
+            nextRow.classList.remove('hidden');
+        } else {
+            nextRow.classList.add('hidden');
+        }
+    }
+    else {
+        const airplaneList = airport.airplanes;
+        if (airplaneList.length > 0) {
+            const html = `<td colspan="4" class="subtable">
+                    <table style='width:80%'>
+                        <thead >
+                            <tr>
+                                <th class='nested'>飛機名稱</th>
+                                <th class='nested'>座位數量</th>
+                                <th class='nested'>最高速度</th>
+                                <th class='nested'>重量</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${airplaneList.map(item => `
+                                <tr>                               
+                                    <td>${item.pname}</td>
+                                    <td>${item.pseats}</td>
+                                    <td>${item.pmaxspeed}</td>
+                                    <td>${item.pheavyload}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                    </td>
+                `;
+            row.insertAdjacentHTML('afterend', html);
+        }
+        else { 
+            let html2 = `<td colspan="4" class="subtable">
+                    <label style='color:red'>
+                        沒有任何飛機參與此機場
+                    </label>
+                </td>
+                `;
+            row.insertAdjacentHTML('afterend', html2);
+        }
+    }
 }
