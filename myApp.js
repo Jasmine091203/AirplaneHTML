@@ -66,7 +66,7 @@ function crossTableBrief() {
     const html = `
         <div class="button-container">
             <button class='btnMenu2' onclick="AirportForAirplane()">飛機所在的機場</button>
-            <button class='btnMenu2' onclick="AirplanesForAirport()">在機場停泊的飛機</button>
+            <button class='btnMenu2' onclick="airplanesForAirport()">在機場停泊的飛機</button>
         </div>
     `;
     // 切換功能區域的內容
@@ -777,7 +777,7 @@ function show_join_airplanes_info(airport) {
 function crossTableDoubleLayer() {
     const html = `
         <div class="button-container">
-            <button class='btnMenu2' onclick="airportDetailsForAirplane()">參與飛機的機場詳細資料</button>
+            <button class='btnMenu2' onclick="AirportDetailsForAirplane()">參與飛機的機場詳細資料</button>
             <button class='btnMenu2' onclick="airplaneDetailsForAirport()">機場所參與的飛機詳細資料</button>
         </div>
     `;
@@ -800,7 +800,7 @@ function show_airport_list(airport) {
         <table>
             <thead>
                 <tr>
-                <th>飛機名稱</th>
+                <th>飛機名稱</th> //?????????//飛機??
                 <th>航廈數</th>
                 <th>停機坪數</th>
                 <th>面積</th>
@@ -848,35 +848,161 @@ function show_airplane_details_info(event, airport) {
     else {
         const airplaneList = airport.airplanes;
         if (airplaneList.length > 0) {
+            const html = `<td colspan="4" class="subtable>
+            <table style='width:80%'>
+                <thead>
+                    <tr>
+                        <th class='nested'>飛機名稱</th>
+                        <th class='nested'>座位數量</th>
+                        <th class='nested'>最高速度</th>
+                        <th class='nested'>重量</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${airplaneList.map(item => `
+                        <tr>                               
+                            <td>${item.pname}</td>
+                            <td>${item.pseats}</td>
+                            <td>${item.pmaxspeed}</td>
+                            <td>${item.pheavyload}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </td>`;
+        
+            row.insertAdjacentHTML('afterend', html);
+            
+        }
+        else { 
+            let html2 = `<td colspan="4" class="subtable">
+                    <label style='color:red'>
+                        沒有任何飛機參與此機場
+                    </label>
+                </td>
+                `;
+            row.insertAdjacentHTML('afterend', html2);
+        }
+    }
+}
+
+//---------------------------------------------------------------------------------------------------------------------------------//
+
+// 點選「參與行事曆的會員詳細資料」按鈕時，呼叫此函式
+function AirportDetailsForAirplane() {
+    // 取得行事曆資料
+    axiosInstance.get('Airplane')
+        .then(res => {
+            const airplane = res.data.data;
+            // 此函式呈現行事曆簡易資料在頁面中
+            show_airplane_list(airplane);
+        })
+        .catch(err => {
+            console.error(err);
+        });
+}
+
+// 呈現「行事曆簡易資料」在頁面中
+function show_airplane_list(airplane) {
+    // 行事曆簡易資料清單
+    const html = `
+        <table>
+            <thead>
+                <tr>
+                    <th>飛機編號</th>
+                    <th>飛機名稱</th>
+                    <th>座位數量</th>
+                    <th>最高速度</th>
+                    <th>重量</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${airplane.map(item => `
+                    <tr onClick="show_all_airports_for_airplane(event, ${item.pid})">
+                        <td>${item.pname}</td>
+                        <td>${item.pseats}</td>
+                        <td>${item.pmaxspeed}</td>
+                        <td>${item.pheavyload}</td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
+    // 切換功能區域的內容
+    switchContent('點擊飛機可查看停靠的機場詳細資料', html);
+}
+
+// 點選「某一筆行事曆」時，呼叫此函式
+function show_all_airports_for_airplane(event, pid) {
+    // 取得參與被點選行事曆的會員資料
+    axiosInstance.get(`Cross/AirportDetailsForAirplane/${pid}`)
+        .then(res => {
+            const airplane = res.data.data;
+            // 此函式呈現參與被點選行事曆的所有會員詳細資料
+            show_airport_details_info(event, airplane);
+        })
+        .catch(err => {
+            console.error(err);
+        });
+}
+
+// 顯示「參與被點選行事曆的所有會員詳細資料」
+function show_airport_details_info(event, airplane) {
+    const row = event.target.parentElement;
+
+    let nextRow = null;
+    // 判斷是否有下一個元素節點
+    if (row.nextElementSibling)
+        nextRow = row.nextElementSibling.children[0];
+
+    // 如果有下一個元素節點，且該元素節點有包含 class 名稱為 subtable
+    if (nextRow && nextRow.classList.contains('subtable')) {
+        // 底下的判斷式可用來判斷並切換是否要隱藏或顯示該元素節點
+        // 如果該元素節點有包含 class 名稱為 hidden
+        if (nextRow.classList.contains('hidden')) {
+            // 則移除該元素節點的 hidden class（亦即不隱藏）
+            nextRow.classList.remove('hidden');
+        } else {
+            // 否則，加入 hidden class 至該元素節點 （亦即隱藏）
+            nextRow.classList.add('hidden');
+        }
+    }
+    else {
+        // 取得參與被點選行事曆的會員資料
+        const airportList = airplane.airports;
+        // 至少有一個會員參與此行事曆
+        if (airportList.length > 0) {
             const html = `<td colspan="4" class="subtable">
                     <table style='width:80%'>
                         <thead >
                             <tr>
-                                <th class='nested'>飛機名稱</th>
-                                <th class='nested'>座位數量</th>
-                                <th class='nested'>最高速度</th>
-                                <th class='nested'>重量</th>
+                                <th class='nested'>機場名稱</th>
+                                <th class='nested'>航廈數</th>
+                                <th class='nested'>停機坪數</th>
+                                <th class='nested'>面積</th>
                             </tr>
                         </thead>
                         <tbody>
-                            ${airplaneList.map(item => `
-                                <tr>                               
-                                    <td>${item.pname}</td>
-                                    <td>${item.pseats}</td>
-                                    <td>${item.pmaxspeed}</td>
-                                    <td>${item.pheavyload}</td>
+                            ${airportList.map(item => `
+                                <tr>
+                                    <td>${item.aname}</td>
+                                    <td>${item.aterminal}</td>
+                                    <td>${item.aapron}</td>
+                                    <td>${item.aarea}</td>
                                 </tr>
                             `).join('')}
                         </tbody>
                     </table>
                     </td>
                 `;
+
+            // 在被點選行事曆的下一個元素節點後面插入 html 內容
             row.insertAdjacentHTML('afterend', html);
         }
-        else { 
+        else { // 如果沒有會員參與此行事曆
             let html2 = `<td colspan="4" class="subtable">
                     <label style='color:red'>
-                        沒有任何飛機參與此機場
+                        沒有任何機場停放此飛機
                     </label>
                 </td>
                 `;
